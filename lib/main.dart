@@ -5,14 +5,9 @@ void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -27,10 +22,11 @@ class MainPage extends StatefulWidget {
   @override
   _MainPageState createState() => _MainPageState();
 }
+
 class _MainPageState extends State<MainPage> {
   dynamic mvList = const Text("검색하세요");
 
-  void showCal() async {
+  Future<void> showCal() async {
     var dt = await showDatePicker(
       context: context,
       initialDate: DateTime(2010, 1, 1),
@@ -51,31 +47,78 @@ class _MainPageState extends State<MainPage> {
           mvList = ListView.separated(
             itemBuilder: (context, index) {
               return ListTile(
-                title: Text(komv[index]['rank']+"위 "+komv[index]['movieNm']),
-                subtitle: Text(komv[index]['openDt']
-                    .toString()
-                    .replaceAll('<br/>', '\n')),
+                title: Text(komv[index]['rank'] + "위 " + komv[index]['movieNm']),
+                subtitle: Text(komv[index]['openDt']),
+                onTap: () async {
+                  if (komv[index] != null) {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MovieDetailsPage(movie: komv[index]),
+                      ),
+                    );
+                  }
+                },
               );
             },
-            separatorBuilder: (context, index) => Divider(),
+            separatorBuilder: (context, index) => const Divider(),
             itemCount: komv.length,
           );
         }
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         children: [
-          Text("20230101"),
+          Text("박스오피스"),
           Expanded(child: mvList),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: showCal,
+        onPressed: () async {
+          await showCal();
+        },
         child: Icon(Icons.calendar_today),
+      ),
+    );
+  }
+}
+
+class MovieDetailsPage extends StatelessWidget {
+  final dynamic movie;
+
+  const MovieDetailsPage({Key? key, required this.movie}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    var directors = '';
+    if (movie['directors'] != null && movie['directors'].isNotEmpty) {
+      directors = movie['directors'][0]['peopleNm'];
+    }
+
+    var movieNmEn = '';
+    if (movie['movieNmEn'] != null) {
+      movieNmEn = movie['movieNmEn'];
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(movie['movieNm']),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('영화 제목: ${movie['movieNm']}'),
+            Text('감독: $directors'),
+            Text('영문 제목: $movieNmEn'),
+          ],
+        ),
       ),
     );
   }
